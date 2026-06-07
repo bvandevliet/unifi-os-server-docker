@@ -25,9 +25,12 @@ $SUDO rm -rf \
 
 # The installer's Podman subprocess runs as the uosserver user and stats paths
 # under HOME to find storage.conf. /home/runner is mode 750 by default so
-# uosserver cannot traverse it, causing "permission denied" and a broken pipe.
-# Adding +x for others allows directory traversal without exposing file contents.
-chmod o+x "$HOME"
+# uosserver cannot traverse it — chmod 755 the full path chain and pre-create
+# storage.conf with world-readable permissions so Podman can open it.
+mkdir -p "$HOME/.config/containers"
+chmod 755 "$HOME" "$HOME/.config" "$HOME/.config/containers"
+touch "$HOME/.config/containers/storage.conf"
+chmod 644 "$HOME/.config/containers/storage.conf"
 
 curl -fSL -o unifi-os-server "$DOWNLOAD_URL"
 $SUDO chmod +x unifi-os-server
