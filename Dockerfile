@@ -2,7 +2,7 @@ ARG BASE_IMAGE=uosserver-base:latest
 FROM ${BASE_IMAGE}
 
 # ── Metadata ──────────────────────────────────────────────────────────────────
-LABEL org.opencontainers.image.source="https://github.com/YOUR_USERNAME/unifi-os-server-docker"
+LABEL org.opencontainers.image.source="https://github.com/bvandevliet/unifi-os-server-docker"
 LABEL org.opencontainers.image.description="Self-hosted UniFi OS Server — single volume, capability-based security, multi-arch (amd64/arm64), auto-updated"
 LABEL org.opencontainers.image.licenses="MIT"
 
