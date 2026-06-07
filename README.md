@@ -175,11 +175,9 @@ Open the **site switcher** in UOS (top-left of the Network UI, where the site na
 
 ### 5. Complete the guided walkthrough in the old Network Application
 
-Back in the old Network Application's guided walkthrough:
+Back in the old Network Application's guided walkthrough, enter the inform URL of UOS (`http://<UOS_SYSTEM_IP>:8080/inform`) and follow the remaining prompts.
 
-1. Select the devices to migrate
-2. Enter the inform URL of UOS: `http://<UOS_SYSTEM_IP>:8080/inform`
-3. Click **Forget** on the migrated devices
+> **Tip:** if you kept the same host IP and inform port mapping as the old Network Application, devices will reconnect to UOS automatically without any manual intervention.
 
 ### 6. Stop and decommission the old Network Application
 
