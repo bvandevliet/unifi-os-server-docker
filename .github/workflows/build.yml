@@ -39,6 +39,7 @@ jobs:
   # ---------------------------------------------------------------------------
   build:
     strategy:
+      fail-fast: false  # let both arches run independently; one failing must not cancel the other
       matrix:
         include:
           - runner:   ubuntu-24.04
