@@ -17,6 +17,8 @@ on:
 
 env:
   FIRMWARE_API: https://fw-update.ubnt.com/api/firmware-latest
+  # Opt into Node.js 24 for actions before it becomes mandatory on 2026-06-16.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 # ─── Job graph ────────────────────────────────────────────────────────────────
 #

@@ -29,7 +29,8 @@ $SUDO rm -rf \
 # storage.conf with world-readable permissions so Podman can open it.
 mkdir -p "$HOME/.config/containers"
 chmod 755 "$HOME" "$HOME/.config" "$HOME/.config/containers"
-touch "$HOME/.config/containers/storage.conf"
+# Set the storage driver explicitly to suppress Podman's "driver was picked automatically" warning.
+printf '[storage]\ndriver = "overlay"\n' > "$HOME/.config/containers/storage.conf"
 chmod 644 "$HOME/.config/containers/storage.conf"
 
 curl -fSL -o unifi-os-server "$DOWNLOAD_URL"
