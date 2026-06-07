@@ -147,8 +147,9 @@ rootless Podman container under `/home/uosserver/`. The CI pipeline:
 4. **Copy Podman storage** (`load-base-image.sh`) — copies overlay dirs from
    `/home/uosserver/` to `$HOME` using `sudo`, then `chown`s them back to the runner user.
 
-5. **Load into Docker** via `skopeo copy containers-storage:<tag> docker-daemon:uosserver-base:local`
-   — no intermediate tar file required.
+5. **Load into Docker** via `podman save IMAGE | docker load` + `docker tag` —
+   `skopeo copy containers-storage:` requires user namespace support (`unshare`)
+   which GitHub runners do not permit, so the tar-based approach is used instead.
 
 6. **Build the thin overlay** — `docker build` using `uosserver-base:local` as base.
 
