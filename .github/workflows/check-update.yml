@@ -1,0 +1,34 @@
+name: Check for Updates
+
+# Runs daily and on demand. When a new UOS Server version is detected, bumps
+# the version in Dockerfile, commits it, creates a semver tag, and triggers
+# the build workflow — all without leaving this single job.
+#
+# Only dependency: actions/checkout@v4. Version-bump commit uses the
+# pre-installed `gh` CLI with the automatic GITHUB_TOKEN; the build is
+# triggered automatically by the tag push to build.yml (tags: ["v*"]).
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # daily at 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write  # push commits and tags
+
+env:
+  FIRMWARE_API: https://fw-update.ubnt.com/api/firmware-latest
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history required to push tags
+
+      - name: Check for update and trigger build if needed
+        run: bash .github/scripts/check-update.sh
+        env:
+          GH_TOKEN: ${{ github.token }}

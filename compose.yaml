@@ -1,0 +1,81 @@
+# Reference deployment — copy and adjust as needed.
+# See AGENTS.md for a full explanation of each requirement.
+
+services:
+
+  unifi-os-server:
+    image: ghcr.io/YOUR_USERNAME/unifi-os-server:latest
+    container_name: unifi-os-server
+    restart: unless-stopped
+
+    # ── cgroup / systemd requirements ──────────────────────────────────────
+    # systemd runs as PID 1 inside the container and must access host cgroups.
+    # Host must use cgroup v2: verify with `stat -fc %T /sys/fs/cgroup` → cgroup2fs.
+    cgroup: host
+
+    # ── Capabilities ───────────────────────────────────────────────────────
+    # Drop all, then add only what systemd and UOS services actually need.
+    # Do NOT use `privileged: true` — these explicit caps are sufficient.
+    cap_drop:
+      - ALL
+    cap_add:
+      - SYS_ADMIN          # systemd cgroup management
+      - NET_ADMIN          # network interface / firewall rules
+      - NET_RAW            # raw sockets (device communication)
+      - NET_BIND_SERVICE   # bind ports < 1024
+      - DAC_OVERRIDE       # file permission bypass for service init
+      - DAC_READ_SEARCH    # directory traversal
+      - FOWNER             # chown arbitrary files
+      - CHOWN              # change file ownership
+      - SETUID             # drop/set uid for service workers
+      - SETGID             # drop/set gid for service workers
+      - KILL               # send signals across uid boundaries
+      - SYS_CHROOT         # chroot for service isolation
+      - SYS_PTRACE         # process inspection
+      - SYS_RESOURCE       # set resource limits
+      - AUDIT_WRITE        # write to kernel audit log
+      - MKNOD              # create device files
+
+    # ── tmpfs mounts ───────────────────────────────────────────────────────
+    # Without /run:exec, systemd unit activations fail silently.
+    tmpfs:
+      - /run:exec
+      - /run/lock
+      - /tmp:exec
+      - /var/lib/journal
+      - /var/opt/unifi/tmp:size=64m
+
+    # ── Environment ────────────────────────────────────────────────────────
+    environment:
+      - UOS_SYSTEM_IP=${UOS_SYSTEM_IP:-}  # required: hostname or IP reachable by devices
+      - UOS_UUID=${UOS_UUID:-}            # optional: fixed controller UUID
+
+    # ── Persistent state & cgroup ──────────────────────────────────────────
+    # All state is redirected to /unifi by entrypoint.sh; a single named volume
+    # is sufficient. Never share this volume between two running containers.
+    # /sys/fs/cgroup must be rw; ro causes cryptic systemd service failures.
+    volumes:
+      - unifi_data:/unifi
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+
+    # ── Ports ──────────────────────────────────────────────────────────────
+    ports:
+      - "11443:443"         # Web GUI / API  (maps internal 443 → host 11443)
+      - "8080:8080"         # Device communication / inform (mandatory)
+      - "3478:3478/udp"     # STUN
+      - "10003:10003/udp"   # Device discovery
+      # Optional — uncomment as needed:
+      # - "8443:8443"       # UniFi Network app GUI (legacy port)
+      # - "8444:8444"       # Hotspot portal
+      # - "6789:6789"       # Mobile throughput test
+      # - "5514:5514/udp"   # Remote syslog
+      # - "5005:5005"       # RTP (Talk)
+      # - "9543:9543"       # Identity Hub
+      # - "11084:11084"     # Site Supervisor
+      # - "5671:5671"       # AMQPS (TLS)
+      # - "8880:8880"       # Hotspot redirect (HTTP)
+      # - "8881:8881"       # Hotspot redirect (HTTP)
+      # - "8882:8882"       # Hotspot redirect (HTTP)
+
+volumes:
+  unifi_data:
