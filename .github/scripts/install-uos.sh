@@ -23,6 +23,12 @@ $SUDO rm -rf \
   /opt/ghc \
   /opt/hostedtoolcache/CodeQL
 
+# The installer's Podman subprocess runs as the uosserver user and stats paths
+# under HOME to find storage.conf. /home/runner is mode 750 by default so
+# uosserver cannot traverse it, causing "permission denied" and a broken pipe.
+# Adding +x for others allows directory traversal without exposing file contents.
+chmod o+x "$HOME"
+
 curl -fSL -o unifi-os-server "$DOWNLOAD_URL"
 $SUDO chmod +x unifi-os-server
 
