@@ -156,29 +156,38 @@ The UniFi Network Application (self-hosted `.deb`/`.jar`) is being deprecated in
 In your existing Network Application:
 
 - Go to **Settings → Control Plane → Backups**
-- Download a local backup (`.unf` file)
+- Download a local backup (`.unf` file) — keep this as a fallback
 
-### 2. Stop your existing Network Application
+### 2. Export your site
 
-Shut it down **before** starting UniFi OS Server — running both simultaneously against the same devices will cause adoption conflicts.
+While the old Network Application is **still running**:
+
+- Go to **Settings → System → Site Management → Export Site**
+- Download the site export file and keep the guided walkthrough open in the browser — you'll need it in step 5
 
 ### 3. Start UniFi OS Server and complete the setup wizard
 
 Follow the [Quick Start](#quick-start) above. Complete the setup wizard at `https://<UOS_SYSTEM_IP>:11443` — create a new installation (do not attempt to restore the `.unf` backup here; the wizard restore path is for System Config Backups tied to a UI account, not for Network Application exports).
 
-### 4. Import your site via Site Export
+### 4. Import the site in UOS
 
-The `.unf` backup from the standalone Network Application cannot be restored via **Settings → Control Plane → Backups** — UOS will reject it with *"The owner in the backup file must be the same as the owner of this console."* Use the **Site Export** tool instead, which is the officially documented migration path for self-hosted Network Servers ([Ubiquiti docs](https://help.ui.com/hc/en-us/articles/360008976393)):
+Open the **site switcher** in UOS (top-left of the Network UI, where the site name is shown; if not visible, first enable **Settings → System → Site Management → Multi-Site Management**) → **Import Site** → upload the site export file from step 2.
 
-1. In your **old Network Application**: **Settings → System → Site Management → Export Site** — download the site file and follow the guided walkthrough
-2. In **UOS**: open the **site switcher** (top-left of the Network UI, where the site name is shown; if not visible, first enable **Settings → System → Site Management → Multi-Site Management**) → **Import Site** → upload the site export file
-3. Back in the old Network Application, complete the guided walkthrough: select the devices to migrate and enter the inform URL of UOS (`http://<UOS_SYSTEM_IP>:8080/inform`)
-4. Click **Forget** on the migrated devices in the old Network Application
-5. Wait for all devices to appear online in UOS
+### 5. Complete the guided walkthrough in the old Network Application
 
-### 5. Re-adopt devices (if needed)
+Back in the old Network Application's guided walkthrough:
 
-After restoration, devices should reconnect automatically if `UOS_SYSTEM_IP` matches your previous inform address. If any device shows as offline or "Managed by Another Console":
+1. Select the devices to migrate
+2. Enter the inform URL of UOS: `http://<UOS_SYSTEM_IP>:8080/inform`
+3. Click **Forget** on the migrated devices
+
+### 6. Stop and decommission the old Network Application
+
+Once all devices appear online in UOS, shut down the old Network Application.
+
+### 7. Re-adopt devices (if needed)
+
+If any device shows as offline or "Managed by Another Console" after the migration:
 
 ```bash
 # SSH into the device and re-set the inform URL
