@@ -20,11 +20,11 @@ env:
 
 # ─── Job graph ────────────────────────────────────────────────────────────────
 #
-#   build-amd64 ─┐
-#   build-arm64 ─┴── manifest
+#   build (matrix: amd64 ‖ arm64) ── manifest
 #
-# Each build job resolves its own version and installer URL independently,
-# so both arch runners start immediately in parallel with no upstream dependency.
+# Both matrix legs run in parallel on native runners. Version and image name
+# are identical across arches; the manifest job reads them from job outputs
+# (last matrix leg to complete wins, but the values are always the same).
 #
 # Registry: GHCR — uses the automatic GITHUB_TOKEN, no manual secrets required.
 # Runners:  native ubuntu-24.04 / ubuntu-24.04-arm — no QEMU emulation needed.
@@ -34,11 +34,20 @@ env:
 
 jobs:
   # ---------------------------------------------------------------------------
-  # 1a. Extract the base image from the official installer and build the final
-  #     image for linux/amd64 on a native runner.
+  # 1. Extract the base image from the official installer and build the final
+  #    image for each architecture on its native runner (matrix, parallel).
   # ---------------------------------------------------------------------------
-  build-amd64:
-    runs-on: ubuntu-24.04
+  build:
+    strategy:
+      matrix:
+        include:
+          - runner:   ubuntu-24.04
+            arch:     amd64
+            platform: linux-x64
+          - runner:   ubuntu-24.04-arm
+            arch:     arm64
+            platform: linux-arm64
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     permissions:
       packages: write
@@ -53,7 +62,7 @@ jobs:
         run: bash .github/scripts/resolve-version.sh
         env:
           INPUT_VERSION: ${{ inputs.version }}
-          ARCH_PLATFORM: linux-x64
+          ARCH_PLATFORM: ${{ matrix.platform }}
 
       - name: Install UOS Server
         run: bash .github/scripts/install-uos.sh
@@ -63,51 +72,13 @@ jobs:
       - name: Load base image into Docker
         run: bash .github/scripts/load-base-image.sh
 
-      - name: Build and push (amd64)
+      - name: Build and push
         if: ${{ !inputs.dry_run }}
         run: bash .github/scripts/build-push.sh
         env:
           IMAGE:          ${{ steps.resolve.outputs.image }}
           VERSION:        ${{ steps.resolve.outputs.version }}
-          ARCH:           amd64
-          REGISTRY_USER:  ${{ github.actor }}
-          REGISTRY_TOKEN: ${{ github.token }}
-
-  # ---------------------------------------------------------------------------
-  # 1b. Same extraction + build for linux/arm64 on a native ARM runner.
-  #     Duplicating the steps is intentional: jobs run on separate runners and
-  #     cannot share steps. No QEMU needed — fully native execution.
-  # ---------------------------------------------------------------------------
-  build-arm64:
-    runs-on: ubuntu-24.04  # TODO: restore to ubuntu-24.04-arm (requires GH Team for private repos)
-    timeout-minutes: 30
-    permissions:
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Resolve version and installer URL
-        id: resolve
-        run: bash .github/scripts/resolve-version.sh
-        env:
-          INPUT_VERSION: ${{ inputs.version }}
-          ARCH_PLATFORM: linux-arm64
-
-      - name: Install UOS Server
-        run: bash .github/scripts/install-uos.sh
-        env:
-          DOWNLOAD_URL: ${{ steps.resolve.outputs.url }}
-
-      - name: Load base image into Docker
-        run: bash .github/scripts/load-base-image.sh
-
-      - name: Build and push (arm64)
-        if: ${{ !inputs.dry_run }}
-        run: bash .github/scripts/build-push.sh
-        env:
-          IMAGE:          ${{ steps.resolve.outputs.image }}
-          VERSION:        ${{ steps.resolve.outputs.version }}
-          ARCH:           arm64
+          ARCH:           ${{ matrix.arch }}
           REGISTRY_USER:  ${{ github.actor }}
           REGISTRY_TOKEN: ${{ github.token }}
 
@@ -117,17 +88,22 @@ jobs:
   # ---------------------------------------------------------------------------
   manifest:
     if: ${{ !inputs.dry_run }}
-    needs: [build-amd64, build-arm64]
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write   # needed for gh release create
       packages: write   # needed to push to GHCR
     env:
-      VERSION: ${{ needs.build-amd64.outputs.version }}
-      IMAGE:   ${{ needs.build-amd64.outputs.image }}
+      VERSION: ${{ needs.build.outputs.version }}
+      IMAGE:   ${{ needs.build.outputs.image }}
     steps:
+      - uses: actions/checkout@v4
+
       - name: Create and push multi-arch manifest
         run: bash .github/scripts/create-manifest.sh
+        env:
+          REGISTRY_USER:  ${{ github.actor }}
+          REGISTRY_TOKEN: ${{ github.token }}
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
