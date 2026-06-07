@@ -50,7 +50,8 @@ jobs:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     permissions:
-      packages: write
+      contents: read    # needed for actions/checkout
+      packages: write   # needed to push to GHCR
     outputs:
       version: ${{ steps.resolve.outputs.version }}
       image:   ${{ steps.resolve.outputs.image }}
