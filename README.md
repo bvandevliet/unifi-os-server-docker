@@ -162,33 +162,19 @@ In your existing Network Application:
 
 Shut it down **before** starting UniFi OS Server — running both simultaneously against the same devices will cause adoption conflicts.
 
-### 3. Start UniFi OS Server
+### 3. Start UniFi OS Server and complete the setup wizard
 
-Follow the [Quick Start](#quick-start) above. At `https://<UOS_SYSTEM_IP>:11443` the setup wizard will appear.
+Follow the [Quick Start](#quick-start) above. Complete the setup wizard at `https://<UOS_SYSTEM_IP>:11443` — create a new installation (do not attempt to restore the `.unf` backup here; the wizard restore path is for System Config Backups tied to a UI account, not for Network Application exports).
 
-### 4. Restore your backup during the setup wizard
+### 4. Import your site via Site Export
 
-> **Important:** restore the backup **during the first-boot setup wizard**, not from the settings page after completing setup. UOS enforces UI account owner matching on post-setup restores — a backup from the standalone Network Application has no owner and will be rejected with *"The owner in the backup file must be the same as the owner of this console."*
+The `.unf` backup from the standalone Network Application cannot be restored via **Settings → Control Plane → Backups** — UOS will reject it with *"The owner in the backup file must be the same as the owner of this console."* Use the **Site Export** tool instead, which is the officially documented migration path for self-hosted Network Servers ([Ubiquiti docs](https://help.ui.com/hc/en-us/articles/360008976393)):
 
-When the wizard appears, choose **Restore from backup** and upload the `.unf` file before logging in or creating an account.
-
-If the wizard no longer appears (you already completed setup), wipe the volume and start fresh:
-
-```bash
-docker compose down
-docker volume rm unifi_data   # or: rm -rf .volumes/unifi  (if using bind mount)
-docker compose up -d
-```
-
-Then open `https://<UOS_SYSTEM_IP>:11443` again and restore via the wizard.
-
-#### Alternative: Site Export (skips owner check)
-
-If you cannot use the wizard restore path, use the Site Export tool instead:
-
-1. In your old Network Application: **Settings → System → Site Management → Export Site**
-2. Complete the UOS setup wizard normally (create a new setup)
-3. In UOS, open the site switcher → **Import Site** and upload the export file
+1. In your **old Network Application**: **Settings → System → Site Management → Export Site** — download the site file and follow the guided walkthrough
+2. In **UOS**: open the **site switcher** (top-left of the Network UI, where the site name is shown; if not visible, first enable **Settings → System → Site Management → Multi-Site Management**) → **Import Site** → upload the site export file
+3. Back in the old Network Application, complete the guided walkthrough: select the devices to migrate and enter the inform URL of UOS (`http://<UOS_SYSTEM_IP>:8080/inform`)
+4. Click **Forget** on the migrated devices in the old Network Application
+5. Wait for all devices to appear online in UOS
 
 ### 5. Re-adopt devices (if needed)
 
