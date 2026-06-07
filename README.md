@@ -164,14 +164,31 @@ Shut it down **before** starting UniFi OS Server — running both simultaneously
 
 ### 3. Start UniFi OS Server
 
-Follow the [Quick Start](#quick-start) above. Complete the setup wizard at `https://<UOS_SYSTEM_IP>:11443`.
+Follow the [Quick Start](#quick-start) above. At `https://<UOS_SYSTEM_IP>:11443` the setup wizard will appear.
 
-### 4. Restore your backup
+### 4. Restore your backup during the setup wizard
 
-In the UniFi OS Server web UI:
+> **Important:** restore the backup **during the first-boot setup wizard**, not from the settings page after completing setup. UOS enforces UI account owner matching on post-setup restores — a backup from the standalone Network Application has no owner and will be rejected with *"The owner in the backup file must be the same as the owner of this console."*
 
-- Go to **Settings → Control Plane → Backups → Restore**
-- Upload the `.unf` backup file from step 1
+When the wizard appears, choose **Restore from backup** and upload the `.unf` file before logging in or creating an account.
+
+If the wizard no longer appears (you already completed setup), wipe the volume and start fresh:
+
+```bash
+docker compose down
+docker volume rm unifi_data   # or: rm -rf .volumes/unifi  (if using bind mount)
+docker compose up -d
+```
+
+Then open `https://<UOS_SYSTEM_IP>:11443` again and restore via the wizard.
+
+#### Alternative: Site Export (skips owner check)
+
+If you cannot use the wizard restore path, use the Site Export tool instead:
+
+1. In your old Network Application: **Settings → System → Site Management → Export Site**
+2. Complete the UOS setup wizard normally (create a new setup)
+3. In UOS, open the site switcher → **Import Site** and upload the export file
 
 ### 5. Re-adopt devices (if needed)
 
