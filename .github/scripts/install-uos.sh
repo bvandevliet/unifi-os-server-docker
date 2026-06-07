@@ -23,11 +23,6 @@ $SUDO rm -rf \
   /opt/ghc \
   /opt/hostedtoolcache/CodeQL
 
-# Podman's storage.conf must exist before the installer runs, otherwise it fails
-# to initialise its storage backend.
-mkdir -p "$HOME/.config/containers"
-touch "$HOME/.config/containers/storage.conf"
-
 curl -fSL -o unifi-os-server "$DOWNLOAD_URL"
 $SUDO chmod +x unifi-os-server
 
