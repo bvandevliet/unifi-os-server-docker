@@ -79,7 +79,7 @@ jobs:
   #     cannot share steps. No QEMU needed — fully native execution.
   # ---------------------------------------------------------------------------
   build-arm64:
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-24.04  # TODO: restore to ubuntu-24.04-arm (requires GH Team for private repos)
     timeout-minutes: 30
     permissions:
       packages: write
