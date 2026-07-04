@@ -5,8 +5,9 @@ name: Check for Updates
 # the build workflow — all without leaving this single job.
 #
 # Only dependency: actions/checkout@v4. Version-bump commit uses the
-# pre-installed `gh` CLI with the automatic GITHUB_TOKEN; the build is
-# triggered automatically by the tag push to build.yml (tags: ["v*"]).
+# pre-installed `gh` CLI with the automatic GITHUB_TOKEN.
+# Note: GITHUB_TOKEN pushes do not trigger other workflows (GitHub security
+# guard), so build.yml is dispatched explicitly via `gh workflow run`.
 
 on:
   schedule:
@@ -15,6 +16,7 @@ on:
 
 permissions:
   contents: write  # push commits and tags
+  actions: write   # dispatch build.yml
 
 env:
   FIRMWARE_API: https://fw-update.ubnt.com/api/firmware-latest

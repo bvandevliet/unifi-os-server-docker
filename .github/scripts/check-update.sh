@@ -5,6 +5,10 @@ set -euo pipefail
 # for the latest release, and — if they differ — bump Dockerfile, commit, tag,
 # push, and dispatch build.yml with the new version.
 #
+# Note: GITHUB_TOKEN pushes do not trigger other workflows (GitHub security
+# guard against infinite loops), so build.yml is dispatched explicitly via
+# `gh workflow run` after the tag push.
+#
 # Standalone usage (from repo root, with a token that has contents:write):
 #   GH_TOKEN=ghp_... bash .github/scripts/check-update.sh
 #
@@ -48,4 +52,7 @@ git commit -m "chore: bump UOS Server $CURRENT → $LATEST"
 git tag "v$LATEST" || echo "Tag v$LATEST already exists, skipping"
 git push origin main
 git push origin "v$LATEST" || true
-echo "Pushed v$LATEST — build.yml will be triggered by the tag push."
+
+echo "Dispatching build workflow for v$LATEST .."
+gh workflow run build.yml --ref "v$LATEST" -f version="$LATEST"
+echo "Build workflow dispatched."
