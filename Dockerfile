@@ -9,7 +9,7 @@ LABEL org.opencontainers.image.licenses="MIT"
 # ── Version ───────────────────────────────────────────────────────────────────
 # Single source of truth: check-update.yml reads and bumps this value.
 # Build pipeline parses it with: grep -oP '^ARG UOS_SERVER_VERSION=\K[0-9.]+'
-ARG UOS_SERVER_VERSION=5.1.21
+ARG UOS_SERVER_VERSION=5.1.37
 ENV UOS_SERVER_VERSION=${UOS_SERVER_VERSION}
 
 # Required: systemd (PID 1) must receive SIGRTMIN+3 to initiate a clean shutdown.
